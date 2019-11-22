@@ -28,6 +28,9 @@ public abstract class Teleop_opmode extends OpMode {
     private DcMotor right_front = null;
     private DcMotor right_back = null;
 
+    private double reset_angle = 0;
+    private
+
     BNO055IMU imu;
 
     //ModernRoboticsI2cGyro gyro    = null; //adding gyro
@@ -80,12 +83,6 @@ public abstract class Teleop_opmode extends OpMode {
         rotate = gamepad1.right_stick_x;
         double pi_4 = Math.PI / 4;
 
-
-        //double lf = drive + strafe + rotate;
-        //double lb = drive - strafe + rotate;
-        //double rf = drive - strafe - rotate;
-        //double rb = drive + strafe - rotate;
-
         lf_power = (drive *Math.sin(rotate + pi_4)) + strafe;
         lb_power = (drive *Math.cos(rotate + pi_4)) - strafe;
         rf_power = (drive *Math.cos(rotate + pi_4)) + strafe;
@@ -103,6 +100,29 @@ public abstract class Teleop_opmode extends OpMode {
 
     @Override
     public void stop() {
+    }
+
+    //https://seas.yale.edu/sites/default/files/imce/other/HolonomicOmniWheelDrive.pdf
+
+    public void resetAngle() {
+        if(gamepad1.a) {
+            reset_angle = getHeading() + reset_angle;
+        }
+    }
+
+    public double getHeading() {
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC,
+                AxesOrder.ZYX, AngleUnit.DEGREES);
+        double heading = angles.firstAngle;
+        if (heading < -180) {
+            heading = heading + 360;
+        }
+        else if(heading > 180) {
+            heading = heading - 360;
+        }
+        heading = heading - reset_angle;
+        return heading;
+
     }
 
 
