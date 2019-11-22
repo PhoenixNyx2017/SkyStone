@@ -73,29 +73,30 @@ public abstract class Teleop_opmode extends OpMode {
 
     @Override
     public void loop() {
-        double lf_power, lb_power, rf_power, rb_power;
-        double drive, strafe, rotate;
+        //double lf_power, lb_power, rf_power, rb_power;
+        //double drive, strafe, rotate;
         //drive, strafe, rotate
         //-gamepad1.left_stick_y, gamepad1.right_stick_x
-        drive = -gamepad1.left_stick_y;
-        strafe = gamepad1.left_stick_x;
+        //drive = -gamepad1.left_stick_y;
+        //strafe = gamepad1.left_stick_x;
 
-        rotate = gamepad1.right_stick_x;
-        double pi_4 = Math.PI / 4;
+        //rotate = gamepad1.right_stick_x;
+        //double pi_4 = Math.PI / 4;
 
-        lf_power = (drive *Math.sin(rotate + pi_4)) + strafe;
-        lb_power = (drive *Math.cos(rotate + pi_4)) - strafe;
-        rf_power = (drive *Math.cos(rotate + pi_4)) + strafe;
-        rb_power = (drive *Math.sin(rotate + pi_4)) - strafe;
+        //lf_power = (drive *Math.sin(rotate + pi_4)) + strafe;
+        //lb_power = (drive *Math.cos(rotate + pi_4)) - strafe;
+        //rf_power = (drive *Math.cos(rotate + pi_4)) + strafe;
+        //rb_power = (drive *Math.sin(rotate + pi_4)) - strafe;
 
         //double pos = BNO055IMU.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ,
         //        BNO055IMU.AngleUnit.DEGREES);
 
-        left_front.setPower(lf_power);
-        right_front.setPower(rf_power);
-        left_back.setPower(lb_power);
-        right_back.setPower(rb_power);
+        //left_front.setPower(lf_power);
+        //right_front.setPower(rf_power);
+        //left_back.setPower(lb_power);
+        //right_back.setPower(rb_power);
 
+        drive();
     }
 
     @Override
@@ -103,6 +104,57 @@ public abstract class Teleop_opmode extends OpMode {
     }
 
     //https://seas.yale.edu/sites/default/files/imce/other/HolonomicOmniWheelDrive.pdf
+
+    public void drive() {
+        //This is for omni drive
+        double Protate = gamepad1.right_stick_x/4;
+        double stick_x = gamepad1.left_stick_x * Math.sqrt(Math.pow(1-Math.abs(Protate), 2)/2);
+//Accounts for Protate when limiting magnitude to be less than 1
+        double stick_y = gamepad1.left_stick_y * Math.sqrt(Math.pow(1-Math.abs(Protate), 2)/2);
+        double theta = 0;
+        double Px = 0;
+        double Py = 0;
+        double gyroAngle = getHeading() * Math.PI / 180; //Converts gyroAngle into radians
+
+        if (gyroAngle <= 0) {
+            gyroAngle = gyroAngle + (Math.PI / 2);
+        } else if (0 < gyroAngle && gyroAngle < Math.PI / 2) {
+            gyroAngle = gyroAngle + (Math.PI / 2);
+        } else if (Math.PI / 2 <= gyroAngle) {
+            gyroAngle = gyroAngle - (3 * Math.PI / 2);
+        }
+        gyroAngle = -1 * gyroAngle;
+
+        if(gamepad1.right_bumper){
+            //Disables gyro, sets to -Math.PI/2 so front is defined correctly.
+                    gyroAngle = -Math.PI/2;
+        }
+//Linear directions in case you want to do straight lines.
+        if(gamepad1.dpad_right){
+            stick_x = 0.5;
+        }
+        else if(gamepad1.dpad_left){
+            stick_x = -0.5;
+        }
+        if(gamepad1.dpad_up){
+            stick_y = -0.5;
+        }
+        else if(gamepad1.dpad_down){
+            stick_y = 0.5;
+        }
+//MOVEMENT
+        theta = Math.atan2(stick_y, stick_x) - gyroAngle - (Math.PI / 2);
+        Px = Math.sqrt(Math.pow(stick_x, 2) + Math.pow(stick_y, 2)) *
+                (Math.sin(theta + Math.PI / 4));
+        Py = Math.sqrt(Math.pow(stick_x, 2) + Math.pow(stick_y, 2)) *
+                (Math.sin(theta - Math.PI / 4));
+
+        left_front.setPower(Py - Protate);
+        left_back.setPower(Px - Protate);
+        right_back.setPower(Py + Protate);
+        right_front.setPower(Px + Protate);
+
+    }
 
     public void resetAngle() {
         if(gamepad1.a) {
