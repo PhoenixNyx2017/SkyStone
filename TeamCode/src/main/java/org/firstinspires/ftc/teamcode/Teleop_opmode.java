@@ -60,6 +60,8 @@ public abstract class Teleop_opmode extends OpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
 
+        resetAngle();
+
     }
 
     @Override
